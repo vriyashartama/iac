@@ -17,3 +17,23 @@ variable "droneGhAdmin" {
   type = string
   description = "Drone GitHub Admin"
 }
+
+variable "acmeEmailAddress" {
+  type = string
+  description = "Acme Email Address"
+}
+
+variable "cfEmail" {
+  type = string
+  description = "Clouflare API email address"
+}
+
+variable "cfApiKey" {
+  type = string
+  description = "Clouflare API key"
+}
+
+variable "cfZoneId" {
+  type = string
+  description = "Clouflare Zone ID"
+}

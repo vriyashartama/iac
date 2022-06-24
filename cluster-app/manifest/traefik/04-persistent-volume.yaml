@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: traefik-data
+  namespace: traefik
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 10Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: manual
+  hostPath:
+    path: "/home/azureuser/traefik"
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: traefik-data
+  namespace: traefik
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  volumeName: traefik-data
+  resources:
+    requests:
+      storage: 10Mi

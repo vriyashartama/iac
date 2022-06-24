@@ -15,7 +15,7 @@ spec:
     readOnly: false
     volumeHandle: harbor-data
     volumeAttributes:
-      shareName: n1n72uwmq0rrjcoy
+      shareName: ${azure_share_name}
     nodeStageSecretRef:
       name: azurefile-secret
       namespace: pipeline

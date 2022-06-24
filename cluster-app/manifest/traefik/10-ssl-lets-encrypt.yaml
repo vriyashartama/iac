@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: traefik-secret
+  namespace: traefik
+stringData:
+  CF_API_EMAIL: ${cf_api_email}
+  CF_API_KEY: ${cf_api_key}
+  CF_ZONE_API_TOKEN: ${cf_zone_api_token}
