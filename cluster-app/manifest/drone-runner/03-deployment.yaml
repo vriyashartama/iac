@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drone-runner
+  namespace: pipeline
+  labels:
+    app: drone-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drone-runner
+  template:
+    metadata:
+      labels:
+        app: drone-runner
+    spec:
+      containers:
+      - name: drone-runner
+        image: drone/drone-runner-kube:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DRONE_RPC_HOST
+          value: ${host}
+        - name: DRONE_RPC_PROTO
+          value: ${drone_rpc_proto}
+        - name: DRONE_RPC_SECRET
+          value: ${drone_rpc_secret}
+        - name: DRONE_NAMESPACE_DEFAULT
+          value: "pipeline"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1024Mi"
+            cpu: "500m"

@@ -1,0 +1,15 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: drone-runner
+  namespace: pipeline
+  labels:
+    app: drone-runner
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: pipeline
+roleRef:
+  kind: Role
+  name: drone-runner
+  apiGroup: rbac.authorization.k8s.io

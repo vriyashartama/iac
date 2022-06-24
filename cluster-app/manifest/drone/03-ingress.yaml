@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: drone
+  namespace: pipeline
+  labels:
+    app: drone
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.frontend.passHostHeader: "true"
+    traefik.backend.loadbalancer.sticky: "true"
+spec:
+  rules:
+    - host: ${host}
+      http:
+        paths:
+        - pathType: "Prefix"
+          path: "/"
+          backend:
+            service:
+              name: drone
+              port:
+                number: 80

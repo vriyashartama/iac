@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drone
+  namespace: pipeline
+  labels:
+    app: drone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drone
+  template:
+    metadata:
+      labels:
+        app: drone
+    spec:
+      containers:
+      - name: drone
+        image: drone/drone:2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        env:
+          - name: "DRONE_SERVER_HOST"
+            value: ${host}
+          - name: "DRONE_GITHUB_CLIENT_ID"
+            value: ${github_client_id}
+          - name: "DRONE_GITHUB_CLIENT_SECRET"
+            value: ${github_client_secret}
+          - name: "DRONE_RPC_SECRET"
+            value: ${drone_rpc_secret}
+          - name: "DRONE_SERVER_PROTO"
+            value: ${drone_server_proto}
+          - name: "DRONE_USER_CREATE"
+            value: ${drone_user_create}
+          - name: DRONE_USER_FILTER
+            value: ${drone_user_filter}
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1024Mi"
+            cpu: "500m"
