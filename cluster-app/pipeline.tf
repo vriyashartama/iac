@@ -107,7 +107,7 @@ data "kubectl_path_documents" "default" {
   vars = {
       azurestorageaccountname = base64encode(data.terraform_remote_state.k3s.outputs.azure_storage_name)
       azurestorageaccountkey = base64encode(data.terraform_remote_state.k3s.outputs.azure_file_share_key)
-      azure_storage_name = data.terraform_remote_state.k3s.outputs.azure_storage_name
+      azure_share_name = data.terraform_remote_state.k3s.outputs.azure_storage_name
     }
 }
 
@@ -116,7 +116,7 @@ data "kubectl_path_documents" "default-count-hack" {
   vars = {
       azurestorageaccountname = ""
       azurestorageaccountkey = ""
-      azure_storage_name = ""
+      azure_share_name = ""
     }
 }
 

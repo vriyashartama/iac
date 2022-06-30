@@ -6,7 +6,7 @@ variable "azRegion" {
 
 variable "azVmSize" {
   type = string
-  default = "Standard_DS1_v2"
+  default = "Standard_D4s_v3"
   description = "Azure VM size"
 }
 

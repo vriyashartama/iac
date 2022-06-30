@@ -146,7 +146,7 @@ resource "azurerm_linux_virtual_machine" "default" {
     command = <<EOT
       sleep 30 && \
       k3sup install \
-      --k3s-extra-args '--no-deploy traefik' \t
+      --k3s-extra-args '--no-deploy traefik' \
       --ip ${azurerm_public_ip.default.ip_address} \
       --ssh-key ~/.ssh/id_rsa \
       --user azureuser \
