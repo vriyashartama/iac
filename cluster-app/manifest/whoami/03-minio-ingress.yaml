@@ -1,0 +1,20 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: minio
+  namespace: pipeline
+spec:
+  entryPoints:
+  - https
+  routes:
+  - kind: Rule
+    match: Host(`storage.${root_host}`)
+    services:
+    - name: minio
+      port: 9000
+  tls:
+    certResolver: default
+    domains:
+    - main: ${root_host}
+      sans:
+      - '*.${root_host}'

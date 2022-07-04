@@ -1,0 +1,20 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: minio-console
+  namespace: pipeline
+spec:
+  entryPoints:
+  - https
+  routes:
+  - kind: Rule
+    match: Host(`storage-console.${root_host}`)
+    services:
+    - name: minio-console
+      port: 9001
+  tls:
+    certResolver: default
+    domains:
+    - main: ${root_host}
+      sans:
+      - '*.${root_host}'

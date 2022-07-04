@@ -29,6 +29,7 @@ data "kubectl_path_documents" "traefik" {
       cf_api_email = var.cfEmail
       cf_api_key = var.cfApiKey
       cf_zone_api_token = var.cfZoneId
+      root_host = data.terraform_remote_state.k3s.outputs.public_domain
     }
 }
 
@@ -42,6 +43,7 @@ data "kubectl_path_documents" "traefik-count-hack" {
       cf_api_email = ""
       cf_api_key = ""
       cf_zone_api_token = ""
+      root_host = ""
     }
 }
 
@@ -207,6 +209,7 @@ resource "helm_release" "minio" {
       minio_secret_key = random_uuid.minio_secret_key.id
       minio_host = "storage.${data.terraform_remote_state.k3s.outputs.public_domain}"
       minio_console_host = "storage-console.${data.terraform_remote_state.k3s.outputs.public_domain}"
+      host = data.terraform_remote_state.k3s.outputs.public_domain
     })
   ]
 }

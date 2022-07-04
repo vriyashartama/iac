@@ -170,7 +170,7 @@ service:
 ##
 
 ingress:
-  enabled: true
+  enabled: false
   # ingressClassName: ""
   labels:
     app: minio
@@ -195,7 +195,7 @@ consoleService:
   nodePort: 32001
 
 consoleIngress:
-  enabled: true
+  enabled: false
   # ingressClassName: ""
   labels:
     app: minio
@@ -392,8 +392,8 @@ environment:
   ## Please refer for comprehensive list https://docs.min.io/minio/baremetal/reference/minio-server/minio-server.html
   ## MINIO_SUBNET_LICENSE: "License key obtained from https://subnet.min.io"
   ## MINIO_BROWSER: "off"
-  MINIO_BROWSER_REDIRECT_URL: "http://${minio_console_host}"
-  MINIO_SERVER_URL: "http://${minio_host}"
+  MINIO_BROWSER_REDIRECT_URL: "https://${minio_console_host}"
+  MINIO_SERVER_URL: "https://${minio_host}"
 
 ## The name of a secret in the same kubernetes namespace which contain secret values
 ## This can be useful for LDAP password, etc
