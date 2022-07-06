@@ -238,15 +238,15 @@ resource "helm_release" "harbor" {
   ]
 }
 
-data "http" "argocd_manifest" {
-  url = "https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
-}
+# data "http" "argocd_manifest" {
+#   url = "https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml"
+# }
 
-resource "kubectl_manifest" "argocd" {
-  count     = length(data.http.argocd_manifest.body)
-  yaml_body = element(data.http.argocd_manifest.body, count.index)
+# resource "kubectl_manifest" "argocd" {
+#   count     = length(data.http.argocd_manifest.body)
+#   yaml_body = element(data.http.argocd_manifest.body, count.index)
 
-  depends_on = [
-    data.http.argocd_manifest
-  ]
-}
+#   depends_on = [
+#     data.http.argocd_manifest
+#   ]
+# }
