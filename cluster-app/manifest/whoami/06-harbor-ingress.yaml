@@ -1,0 +1,25 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: harbor
+  namespace: pipeline
+spec:
+  entryPoints:
+  - https
+  routes:
+  - match: Host(`registry.${root_host}`)
+    kind: Rule
+    services:
+    - name: harbor-portal
+      port: 80
+  - match: Host(`registry.${root_host}`) && PathPrefix(`/api/`, `/service/`, `/v2/`, `/chartrepo/`, `/c/`)
+    kind: Rule
+    services:
+    - name: harbor-core
+      port: 80
+  tls:
+    certResolver: default
+    domains:
+    - main: ${root_host}
+      sans:
+      - '*.${root_host}'

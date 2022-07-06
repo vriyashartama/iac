@@ -122,7 +122,7 @@ expose:
 # the IP address of k8s node
 #
 # If Harbor is deployed behind the proxy, set it as the URL of proxy
-externalURL: http://${core_host}
+externalURL: https://${core_host}
 
 # The internal TLS used for harbor components secure communicating. In order to enable https
 # in each components tls cert files need to provided in advance.
@@ -282,7 +282,7 @@ harborAdminPassword: "${harbor_admin_password}"
 caSecretName: ""
 
 # The secret key used for encryption. Must be a string of 16 chars.
-secretKey: "${harobo_secret_key}"
+secretKey: "${harbor_secret_key}"
 
 # The proxy settings for updating trivy vulnerabilities from the Internet and replicating
 # artifacts from/to the registries that cannot be reached directly

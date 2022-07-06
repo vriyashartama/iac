@@ -146,7 +146,7 @@ resource "kubectl_manifest" "default" {
 data "kubectl_path_documents" "drone" {
     pattern = "${path.module}/manifest/drone/*.yaml"
     vars = {
-        host = "ci.${data.terraform_remote_state.k3s.outputs.public_domain}"
+        root_host = data.terraform_remote_state.k3s.outputs.public_domain
         github_client_id = var.ghClientId
         github_client_secret = var.ghClientSecret
         drone_rpc_secret = random_string.drone_rpc_secret.id
@@ -159,7 +159,7 @@ data "kubectl_path_documents" "drone" {
 data "kubectl_path_documents" "drone-count-hack" {
     pattern = "${path.module}/manifest/drone/*.yaml"
     vars = {
-        host = ""
+        root_host = ""
         github_client_id = ""
         github_client_secret = ""
         drone_rpc_secret = ""
@@ -179,7 +179,7 @@ data "kubectl_path_documents" "drone_runner" {
     vars = {
         host = "ci.${data.terraform_remote_state.k3s.outputs.public_domain}"
         drone_rpc_secret = random_string.drone_rpc_secret.id
-        drone_rpc_proto = "http"
+        drone_rpc_proto = "https"
     }
 }
 
@@ -229,7 +229,11 @@ resource "helm_release" "harbor" {
       minio_secret_key = random_uuid.minio_secret_key.id
       minio_bucket = "registry"
       harbor_admin_password = random_string.harbor_admin_password.id
-      harobo_secret_key = random_string.harbor_secret_key.id
+      harbor_secret_key = random_string.harbor_secret_key.id
     })
+  ]
+
+  depends_on = [
+    helm_release.minio
   ]
 }

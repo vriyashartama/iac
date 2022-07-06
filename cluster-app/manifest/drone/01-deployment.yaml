@@ -23,7 +23,7 @@ spec:
         - containerPort: 80
         env:
           - name: "DRONE_SERVER_HOST"
-            value: ${host}
+            value: ci.${root_host}
           - name: "DRONE_GITHUB_CLIENT_ID"
             value: ${github_client_id}
           - name: "DRONE_GITHUB_CLIENT_SECRET"
