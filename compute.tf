@@ -2,6 +2,11 @@ provider "azurerm" {
   features {}
 }
 
+provider "cloudflare" {
+  email   = var.cfEmail
+  api_key = var.cfApiKey
+}
+
 resource "random_pet" "prefix" {}
 
 resource "random_uuid" "azure_file_share_key" {}
@@ -12,7 +17,6 @@ resource "azurerm_resource_group" "default" {
   location = var.azRegion
 }
 
-# Create virtual network
 resource "azurerm_virtual_network" "default" {
   name                = "${random_pet.prefix.id}-vnet"
   location            = var.azRegion
@@ -20,7 +24,6 @@ resource "azurerm_virtual_network" "default" {
   resource_group_name = azurerm_resource_group.default.name
 }
 
-# Create subnet
 resource "azurerm_subnet" "default" {
   name = "${random_pet.prefix.id}-subnet"
   address_prefixes      = ["10.0.1.0/24"]
@@ -28,7 +31,6 @@ resource "azurerm_subnet" "default" {
   resource_group_name  = azurerm_resource_group.default.name
 }
 
-# Create public IP
 resource "azurerm_public_ip" "default" {
   name                = "${random_pet.prefix.id}-ip"
   allocation_method   = "Static"
@@ -36,7 +38,6 @@ resource "azurerm_public_ip" "default" {
   resource_group_name = azurerm_resource_group.default.name
 }
 
-# Create network security group and rule
 resource "azurerm_network_security_group" "default" {
   name                = "${random_pet.prefix.id}-secgroup"
   location            = var.azRegion
@@ -98,21 +99,11 @@ resource "azurerm_network_interface" "default" {
   }
 }
 
-# Connect security group to network interface
 resource "azurerm_network_interface_security_group_association" "default" {
   network_interface_id      = azurerm_network_interface.default.id
   network_security_group_id = azurerm_network_security_group.default.id
 }
 
-output "public_ip" {
-  value = azurerm_public_ip.default.ip_address
-}
-
-output "azure_file_share_key" {
-  value = random_uuid.azure_file_share_key.id
-}
-
-# Create virtual machine
 resource "azurerm_linux_virtual_machine" "default" {
   name                  = "${random_pet.prefix.id}-vm"
   location              = var.azRegion
@@ -160,7 +151,6 @@ resource "random_string" "azure_storage_name" {
   upper = false
 }
 
-
 output "azure_storage_name" {
   value = random_string.azure_storage_name.id
 }
@@ -186,21 +176,12 @@ resource "azurerm_storage_share" "default" {
   }
 }
 
-provider "cloudflare" {
-  email   = var.cfEmail
-  api_key = var.cfApiKey
-}
-
 resource "cloudflare_record" "domain" {
   zone_id = var.cfZoneId
   name    = "pipeline.dev"
   value   = azurerm_public_ip.default.ip_address
   type    = "A"
   proxied = false
-}
-
-output "public_domain" {
-  value = cloudflare_record.domain.hostname
 }
 
 resource "cloudflare_record" "subdomain" {
