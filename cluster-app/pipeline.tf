@@ -20,6 +20,11 @@ provider "kubectl" {
   load_config_file         = false
 }
 
+provider "helm" {
+  kubernetes {
+    config_path = "../kubeconfig"
+  }
+}
 
 resource "random_string" "drone_rpc_secret" {
   length = 32
@@ -54,29 +59,11 @@ data "kubectl_path_documents" "default" {
     }
 }
 
-output "harbor_admin_password" {
-  value = random_string.harbor_admin_password.id
-}
-
-output "harbor_secret_key" {
-  value = random_string.harbor_secret_key.id
-}
-
-output "minio_access_key" {
-  value = random_string.minio_access_key.id
-}
-
-output "minio_secret_key" {
-  value = random_uuid.minio_secret_key.id
-}
-
-resource "kubectl_manifest" "default" {
-  count     = length(data.kubectl_path_documents.default.documents)
-  yaml_body = element(data.kubectl_path_documents.default.documents, count.index)
-
-  depends_on = [
-    data.kubectl_path_documents.default
-  ]
+data "kubectl_path_documents" "argocd" {
+  pattern = "${path.module}/manifest/argocd/*.yaml"
+  vars = {
+      root_host = data.terraform_remote_state.k3s.outputs.public_domain
+    }
 }
 
 data "kubectl_path_documents" "traefik" {
@@ -93,49 +80,12 @@ data "kubectl_path_documents" "traefik" {
     }
 }
 
-resource "kubectl_manifest" "traefik" {
-  count     = length(data.kubectl_path_documents.traefik.documents)
-  yaml_body = element(data.kubectl_path_documents.traefik.documents, count.index)
-
-  depends_on = [
-    resource.kubectl_manifest.default,
-    data.kubectl_path_documents.traefik
-  ]
-}
-
 data "kubectl_path_documents" "whoami" {
   pattern = "${path.module}/manifest/whoami/*.yaml"
   vars = {
     host = "whoami.${data.terraform_remote_state.k3s.outputs.public_domain}"
     root_host = data.terraform_remote_state.k3s.outputs.public_domain
   }
-}
-
-resource "kubectl_manifest" "whoami" {
-  count     = length(data.kubectl_path_documents.whoami.documents)
-  yaml_body = element(data.kubectl_path_documents.whoami.documents, count.index)
-
-  depends_on = [
-    resource.kubectl_manifest.default,
-    data.kubectl_path_documents.whoami
-  ]
-}
-
-
-provider "helm" {
-  kubernetes {
-    config_path = "../kubeconfig"
-  }
-}
-
-resource "kubectl_manifest" "drone" {
-  count     = length(data.kubectl_path_documents.drone.documents)
-  yaml_body = element(data.kubectl_path_documents.drone.documents, count.index)
-
-  depends_on = [
-    data.kubectl_path_documents.drone,
-    resource.kubectl_manifest.default
-  ]
 }
 
 data "kubectl_path_documents" "drone" {
@@ -160,6 +110,45 @@ data "kubectl_path_documents" "drone_runner" {
     }
 }
 
+resource "kubectl_manifest" "default" {
+  count     = length(data.kubectl_path_documents.default.documents)
+  yaml_body = element(data.kubectl_path_documents.default.documents, count.index)
+
+  depends_on = [
+    data.kubectl_path_documents.default
+  ]
+}
+
+resource "kubectl_manifest" "traefik" {
+  count     = length(data.kubectl_path_documents.traefik.documents)
+  yaml_body = element(data.kubectl_path_documents.traefik.documents, count.index)
+
+  depends_on = [
+    resource.kubectl_manifest.default,
+    data.kubectl_path_documents.traefik
+  ]
+}
+
+resource "kubectl_manifest" "whoami" {
+  count     = length(data.kubectl_path_documents.whoami.documents)
+  yaml_body = element(data.kubectl_path_documents.whoami.documents, count.index)
+
+  depends_on = [
+    resource.kubectl_manifest.default,
+    data.kubectl_path_documents.whoami
+  ]
+}
+
+
+resource "kubectl_manifest" "drone" {
+  count     = length(data.kubectl_path_documents.drone.documents)
+  yaml_body = element(data.kubectl_path_documents.drone.documents, count.index)
+
+  depends_on = [
+    data.kubectl_path_documents.drone,
+    resource.kubectl_manifest.default
+  ]
+}
 
 resource "kubectl_manifest" "drone_runner" {
   count     = length(data.kubectl_path_documents.drone_runner.documents)
@@ -214,14 +203,6 @@ resource "helm_release" "harbor" {
   depends_on = [
     helm_release.minio
   ]
-}
-
-
-data "kubectl_path_documents" "argocd" {
-  pattern = "${path.module}/manifest/argocd/*.yaml"
-  vars = {
-      root_host = data.terraform_remote_state.k3s.outputs.public_domain
-    }
 }
 
 resource "kubectl_manifest" "argocd" {
