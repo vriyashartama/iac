@@ -46,7 +46,7 @@ resource "random_uuid" "minio_secret_key" {
 }
 
 data "kubectl_path_documents" "default" {
-  pattern = "${path.module}/manifest/*.yaml"
+  pattern = "${path.module}/manifest/global/*.yaml"
   vars = {
       azurestorageaccountname = base64encode(data.terraform_remote_state.k3s.outputs.azure_storage_name)
       azurestorageaccountkey = base64encode(data.terraform_remote_state.k3s.outputs.azure_file_share_key)
@@ -103,129 +103,118 @@ resource "kubectl_manifest" "traefik" {
   ]
 }
 
-# data "kubectl_path_documents" "whoami" {
-#   pattern = "${path.module}/manifest/whoami/*.yaml"
-#   vars = {
-#     host = "whoami.${data.terraform_remote_state.k3s.outputs.public_domain}"
-#     root_host = data.terraform_remote_state.k3s.outputs.public_domain
-#   }
-# }
+data "kubectl_path_documents" "whoami" {
+  pattern = "${path.module}/manifest/whoami/*.yaml"
+  vars = {
+    host = "whoami.${data.terraform_remote_state.k3s.outputs.public_domain}"
+    root_host = data.terraform_remote_state.k3s.outputs.public_domain
+  }
+}
 
-# data "kubectl_path_documents" "whoami-count-hack" {
-#   pattern = "${path.module}/manifest/whoami/*.yaml"
-#   vars = {
-#     host = ""
-#     root_host = ""
-#   }
-# }
+resource "kubectl_manifest" "whoami" {
+  count     = length(data.kubectl_path_documents.whoami.documents)
+  yaml_body = element(data.kubectl_path_documents.whoami.documents, count.index)
 
-# resource "kubectl_manifest" "whoami" {
-#   count     = length(data.kubectl_path_documents.whoami-count-hack.documents)
-#   yaml_body = element(data.kubectl_path_documents.whoami.documents, count.index)
-# }
+  depends_on = [
+    resource.kubectl_manifest.default,
+    data.kubectl_path_documents.whoami
+  ]
+}
 
 
-# provider "helm" {
-#   kubernetes {
-#     config_path = "../kubeconfig"
-#   }
-# }
+provider "helm" {
+  kubernetes {
+    config_path = "../kubeconfig"
+  }
+}
+
+resource "kubectl_manifest" "drone" {
+  count     = length(data.kubectl_path_documents.drone.documents)
+  yaml_body = element(data.kubectl_path_documents.drone.documents, count.index)
+
+  depends_on = [
+    data.kubectl_path_documents.drone,
+    resource.kubectl_manifest.default
+  ]
+}
+
+data "kubectl_path_documents" "drone" {
+    pattern = "${path.module}/manifest/drone/*.yaml"
+    vars = {
+        root_host = data.terraform_remote_state.k3s.outputs.public_domain
+        github_client_id = var.ghClientId
+        github_client_secret = var.ghClientSecret
+        drone_rpc_secret = random_string.drone_rpc_secret.id
+        drone_server_proto = "https"
+        drone_user_create = "username:${var.droneGhAdmin},admin:true"
+        drone_user_filter = var.droneGhOrg
+    }
+}
+
+data "kubectl_path_documents" "drone_runner" {
+    pattern = "${path.module}/manifest/drone-runner/*.yaml"
+    vars = {
+        host = "ci.${data.terraform_remote_state.k3s.outputs.public_domain}"
+        drone_rpc_secret = random_string.drone_rpc_secret.id
+        drone_rpc_proto = "https"
+    }
+}
 
 
-# data "kubectl_path_documents" "drone" {
-#     pattern = "${path.module}/manifest/drone/*.yaml"
-#     vars = {
-#         root_host = data.terraform_remote_state.k3s.outputs.public_domain
-#         github_client_id = var.ghClientId
-#         github_client_secret = var.ghClientSecret
-#         drone_rpc_secret = random_string.drone_rpc_secret.id
-#         drone_server_proto = "http"
-#         drone_user_create = "username:${var.droneGhAdmin},admin:true"
-#         drone_user_filter = var.droneGhOrg
-#     }
-# }
+resource "kubectl_manifest" "drone_runner" {
+  count     = length(data.kubectl_path_documents.drone_runner.documents)
+  yaml_body = element(data.kubectl_path_documents.drone_runner.documents, count.index)
 
-# data "kubectl_path_documents" "drone-count-hack" {
-#     pattern = "${path.module}/manifest/drone/*.yaml"
-#     vars = {
-#         root_host = ""
-#         github_client_id = ""
-#         github_client_secret = ""
-#         drone_rpc_secret = ""
-#         drone_server_proto = ""
-#         drone_user_create = ""
-#         drone_user_filter = ""
-#     }
-# }
+  depends_on = [
+    data.kubectl_path_documents.drone,
+    resource.kubectl_manifest.default
+  ]
+}
 
-# resource "kubectl_manifest" "drone" {
-#   count     = length(data.kubectl_path_documents.drone-count-hack.documents)
-#   yaml_body = element(data.kubectl_path_documents.drone.documents, count.index)
-# }
+resource "helm_release" "minio" {
+  name = "minio"
+  repository = "https://charts.min.io"
+  namespace = "pipeline"
+  chart = "minio"
 
-# data "kubectl_path_documents" "drone_runner" {
-#     pattern = "${path.module}/manifest/drone-runner/*.yaml"
-#     vars = {
-#         host = "ci.${data.terraform_remote_state.k3s.outputs.public_domain}"
-#         drone_rpc_secret = random_string.drone_rpc_secret.id
-#         drone_rpc_proto = "https"
-#     }
-# }
+  values      = [
+    templatefile("${path.module}/manifest/minio/01-values.yaml", {
+      minio_access_key = random_string.minio_access_key.id
+      minio_secret_key = random_uuid.minio_secret_key.id
+      minio_host = "storage.${data.terraform_remote_state.k3s.outputs.public_domain}"
+      minio_console_host = "storage-console.${data.terraform_remote_state.k3s.outputs.public_domain}"
+      host = data.terraform_remote_state.k3s.outputs.public_domain
+    })
+  ]
 
-# data "kubectl_path_documents" "drone_runner-count-hack" {
-#     pattern = "${path.module}/manifest/drone-runner/*.yaml"
-#     vars = {
-#         host = ""
-#         drone_rpc_secret = ""
-#         drone_rpc_proto = ""
-#     }
-# }
+  depends_on = [
+    resource.kubectl_manifest.default,
+  ]
+}
 
-# resource "kubectl_manifest" "drone_runner" {
-#   count     = length(data.kubectl_path_documents.drone_runner-count-hack.documents)
-#   yaml_body = element(data.kubectl_path_documents.drone_runner.documents, count.index)
-# }
+resource "helm_release" "harbor" {
+  name = "harbor"
+  repository = "https://helm.goharbor.io"
+  namespace = "pipeline"
+  chart = "harbor"
 
-# resource "helm_release" "minio" {
-#   name = "minio"
-#   repository = "https://charts.min.io"
-#   namespace = "pipeline"
-#   chart = "minio"
+  values      = [
+    templatefile("${path.module}/manifest/harbor/01-values.yaml", {
+      core_host = "registry.${data.terraform_remote_state.k3s.outputs.public_domain}"
+      notary_host = "notary.${data.terraform_remote_state.k3s.outputs.public_domain}"
+      minio_host = "storage.${data.terraform_remote_state.k3s.outputs.public_domain}"
+      minio_access_key = random_string.minio_access_key.id
+      minio_secret_key = random_uuid.minio_secret_key.id
+      minio_bucket = "registry"
+      harbor_admin_password = random_string.harbor_admin_password.id
+      harbor_secret_key = random_string.harbor_secret_key.id
+    })
+  ]
 
-#   values      = [
-#     templatefile("${path.module}/manifest/minio/01-values.yaml", {
-#       minio_access_key = random_string.minio_access_key.id
-#       minio_secret_key = random_uuid.minio_secret_key.id
-#       minio_host = "storage.${data.terraform_remote_state.k3s.outputs.public_domain}"
-#       minio_console_host = "storage-console.${data.terraform_remote_state.k3s.outputs.public_domain}"
-#       host = data.terraform_remote_state.k3s.outputs.public_domain
-#     })
-#   ]
-# }
-
-# resource "helm_release" "harbor" {
-#   name = "harbor"
-#   repository = "https://helm.goharbor.io"
-#   namespace = "pipeline"
-#   chart = "harbor"
-
-#   values      = [
-#     templatefile("${path.module}/manifest/harbor/01-values.yaml", {
-#       core_host = "registry.${data.terraform_remote_state.k3s.outputs.public_domain}"
-#       notary_host = "notary.${data.terraform_remote_state.k3s.outputs.public_domain}"
-#       minio_host = "storage.${data.terraform_remote_state.k3s.outputs.public_domain}"
-#       minio_access_key = random_string.minio_access_key.id
-#       minio_secret_key = random_uuid.minio_secret_key.id
-#       minio_bucket = "registry"
-#       harbor_admin_password = random_string.harbor_admin_password.id
-#       harbor_secret_key = random_string.harbor_secret_key.id
-#     })
-#   ]
-
-#   depends_on = [
-#     helm_release.minio
-#   ]
-# }
+  depends_on = [
+    helm_release.minio
+  ]
+}
 
 
 data "kubectl_path_documents" "argocd" {
