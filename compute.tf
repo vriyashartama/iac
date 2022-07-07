@@ -11,7 +11,6 @@ resource "random_pet" "prefix" {}
 
 resource "random_uuid" "azure_file_share_key" {}
 
-# Create resource group
 resource "azurerm_resource_group" "default" {
   name     = "${random_pet.prefix.id}-rg"
   location = var.azRegion
