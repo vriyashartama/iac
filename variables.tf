@@ -1,12 +1,12 @@
 variable "azRegion" {
   type = string
-  default = "Southeast Asia"
+  default = "West US 3"
   description = "Azure region selection"
 }
 
 variable "azVmSize" {
   type = string
-  default = "Standard_D4s_v3"
+  default = "Standard_D2s_v3"
   description = "Azure VM size"
 }
 
